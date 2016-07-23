@@ -1,7 +1,6 @@
 import {Component, Input, forwardRef, OnChanges, SimpleChanges} from '@angular/core';
 import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
-
-import {isNumber, padNumber, toInteger, isDefined} from '../util/util';
+import {isNumber, padNumber, toInteger, toString, isDefined} from '../util/util';
 import {NgbTime} from './ngb-time';
 import {NgbTimepickerConfig} from './timepicker-config';
 
@@ -58,14 +57,14 @@ const NGB_TIMEPICKER_VALUE_ACCESSOR = {
       <table>
         <tr *ngIf="spinners">
           <td class="text-center">
-            <button type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeHour(hourStep)"
+            <button tabindex="-1" type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeHour(hourStep)"
               [disabled]="disabled" [class.disabled]="disabled">
               <span class="chevron"></span>
             </button>
           </td>
           <td>&nbsp;</td>
           <td class="text-center">
-            <button type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeMinute(minuteStep)"
+            <button tabindex="-1" type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeMinute(minuteStep)"
               [disabled]="disabled" [class.disabled]="disabled">
                 <span class="chevron"></span>
             </button>
@@ -73,7 +72,7 @@ const NGB_TIMEPICKER_VALUE_ACCESSOR = {
           <template [ngIf]="seconds">
             <td>&nbsp;</td>
             <td class="text-center">
-              <button type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeSecond(secondStep)"
+              <button tabindex="-1" type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeSecond(secondStep)"
                 [disabled]="disabled" [class.disabled]="disabled">
                 <span class="chevron"></span>
               </button>
@@ -88,20 +87,23 @@ const NGB_TIMEPICKER_VALUE_ACCESSOR = {
           <td>
             <input type="text" class="form-control" [ngClass]="setFormControlSize()" maxlength="2" size="2" placeholder="HH"
               [value]="formatHour(model?.hour)" (change)="updateHour($event.target.value)"
-              [readonly]="readonlyInputs" [disabled]="disabled">
+              [readonly]="readonlyInputs" [disabled]="disabled" (mousewheel)="mouseHourEvent($event)"
+              (keydown.ArrowDown)="keyDownHour($event)" (keydown.ArrowUp)="keyDownHour($event)">
           </td>
           <td>&nbsp;:&nbsp;</td>
           <td>
             <input type="text" class="form-control" [ngClass]="setFormControlSize()" maxlength="2" size="2" placeholder="MM"
               [value]="formatMinSec(model?.minute)" (change)="updateMinute($event.target.value)"
-              [readonly]="readonlyInputs" [disabled]="disabled">
+              [readonly]="readonlyInputs" [disabled]="disabled" (mousewheel)="mouseMinuteEvent($event)"
+              (keydown.ArrowDown)="keyDownMinute($event)" (keydown.ArrowUp)="keyDownMinute($event)">
           </td>
           <template [ngIf]="seconds">
             <td>&nbsp;:&nbsp;</td>
             <td>
               <input type="text" class="form-control" [ngClass]="setFormControlSize()" maxlength="2" size="2" placeholder="SS"
                 [value]="formatMinSec(model?.second)" (change)="updateSecond($event.target.value)"
-                [readonly]="readonlyInputs" [disabled]="disabled">
+              [readonly]="readonlyInputs" [disabled]="disabled" (mousewheel)="mouseSecondEvent($event)"
+              (keydown.ArrowDown)="keyDownSecond($event)" (keydown.ArrowUp)="keyDownSecond($event)">
             </td>
           </template>
           <template [ngIf]="meridian">
@@ -114,14 +116,14 @@ const NGB_TIMEPICKER_VALUE_ACCESSOR = {
         </tr>
         <tr *ngIf="spinners">
           <td class="text-center">
-            <button type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeHour(-hourStep)"
+            <button tabindex="-1" type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeHour(-hourStep)"
               [disabled]="disabled" [class.disabled]="disabled">
               <span class="chevron bottom"></span>
             </button>
           </td>
           <td>&nbsp;</td>
           <td class="text-center">
-            <button type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeMinute(-minuteStep)"
+            <button tabindex="-1" type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeMinute(-minuteStep)"
               [disabled]="disabled" [class.disabled]="disabled">
               <span class="chevron bottom"></span>
             </button>
@@ -129,7 +131,7 @@ const NGB_TIMEPICKER_VALUE_ACCESSOR = {
           <template [ngIf]="seconds">
             <td>&nbsp;</td>
             <td class="text-center">
-              <button type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeSecond(-secondStep)"
+              <button tabindex="-1" type="button" class="btn-link" [ngClass]="setButtonSize()" (click)="changeSecond(-secondStep)"
                 [disabled]="disabled" [class.disabled]="disabled">
                 <span class="chevron bottom"></span>
               </button>
@@ -248,6 +250,48 @@ export class NgbTimepicker implements ControlValueAccessor,
     this.propagateModelChange();
   }
 
+  mouseHourEvent(event: MouseWheelEvent) {
+    if (!this.disabled) {
+      let step: number = this.isScrollUp(event) ? this.hourStep : -this.hourStep;
+      this.changeHour(step);
+    }
+    event.preventDefault();
+  }
+
+  mouseMinuteEvent(event: MouseWheelEvent) {
+    if (!this.disabled) {
+      let step: number = this.isScrollUp(event) ? this.minuteStep : -this.minuteStep;
+      this.changeMinute(step);
+    }
+    event.preventDefault();
+  }
+
+  mouseSecondEvent(event: MouseWheelEvent) {
+    if (!this.disabled) {
+      let step: number = this.isScrollUp(event) ? this.minuteStep : -this.minuteStep;
+      this.changeSecond(step);
+    }
+    event.preventDefault();
+  }
+
+  keyDownHour(event: KeyboardEvent) {
+    event.key === 'ArrowUp' ? this.changeHour(this.hourStep) : this.changeHour(-this.hourStep);
+    event.preventDefault();
+  }
+
+  keyDownMinute(event: KeyboardEvent) {
+    event.key === 'ArrowUp' ? this.changeMinute(this.minuteStep) : this.changeMinute(-this.minuteStep);
+    event.preventDefault();
+  }
+
+  keyDownSecond(event: KeyboardEvent) {
+    event.key === 'ArrowUp' ? this.changeSecond(this.secondStep) : this.changeSecond(-this.secondStep);
+    event.preventDefault();
+  }
+
+  /**
+   * @internal
+   */
   toggleMeridian() {
     if (this.meridian) {
       this.changeHour(12);
@@ -289,5 +333,10 @@ export class NgbTimepicker implements ControlValueAccessor,
     } else {
       this.onChange(null);
     }
+  }
+
+  private isScrollUp(event: MouseWheelEvent): boolean {
+    let delta: number = event.wheelDelta ? event.wheelDelta : -event.wheelDeltaY;
+    return event.detail > 0 || delta > 0;
   }
 }
