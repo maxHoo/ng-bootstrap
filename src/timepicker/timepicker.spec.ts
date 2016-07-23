@@ -12,6 +12,24 @@ import {NgbTimepicker} from './timepicker';
 const createTestComponent = (html: string) =>
     createGenericTestComponent(html, TestComponent) as ComponentFixture<TestComponent>;
 
+enum Key {
+  ArrowUp = 38,
+  ArrowDown = 40
+}
+
+function createKeyDownEvent(key: number) {
+  const event = {which: key, preventDefault: () => {}};
+  spyOn(event, 'preventDefault');
+  return event;
+}
+
+function createMouseWheelEvent(detail: number) {
+  const event = {detail: detail, preventDefault: () => {}};
+  spyOn(event, 'preventDefault');
+  return event;
+}
+
+
 function getTimepicker(el: HTMLElement) {
   return el.querySelector('ngb-timepicker');
 }
@@ -24,8 +42,8 @@ function getButtons(nativeEl: HTMLElement) {
   return nativeEl.querySelectorAll('button.btn-link');
 }
 
-function getFieldsetElement(element: HTMLElement): HTMLFieldSetElement {
-  return <HTMLFieldSetElement>element.querySelector('fieldset');
+function getNgbTpElement(element: HTMLElement): HTMLFieldSetElement {
+  return <HTMLFieldSetElement>element.querySelector('.ngb-tp');
 }
 
 function getMeridianButton(nativeEl: HTMLElement) {
@@ -227,7 +245,74 @@ describe('ngb-timepicker', () => {
                expect(fixture.componentInstance.model).toEqual({hour: 11, minute: 30, second: 0});
 
 
-               (<HTMLButtonElement>buttons[2]).click();  // H-
+               (<HTMLButtonElement>buttons[1]).click();  // H-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+             });
+       }));
+
+
+    it('should increment / decrement hours on key up/down', async(() => {
+         const html = `<ngb-timepicker [(ngModel)]="model"></ngb-timepicker>`;
+
+         const fixture = createTestComponent(html);
+         fixture.componentInstance.model = {hour: 10, minute: 30, second: 0};
+         fixture.detectChanges();
+         fixture.whenStable()
+             .then(() => {
+               fixture.detectChanges();
+               return fixture.whenStable();
+             })
+             .then(() => {
+
+               const inputs = fixture.debugElement.queryAll(By.css('input'));
+
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+
+               const upEvent = createKeyDownEvent(Key.ArrowUp);
+               inputs[0].triggerEventHandler('keydown', upEvent);  // H+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '11:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 11, minute: 30, second: 0});
+
+
+               const downEvent = createKeyDownEvent(Key.ArrowDown);
+               inputs[0].triggerEventHandler('keydown', downEvent);  // H-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+             });
+       }));
+
+
+    it('should increment / decrement hours on mouse wheel up/down', async(() => {
+         const html = `<ngb-timepicker [(ngModel)]="model"></ngb-timepicker>`;
+
+         const fixture = createTestComponent(html);
+         fixture.componentInstance.model = {hour: 10, minute: 30, second: 0};
+         fixture.detectChanges();
+         fixture.whenStable()
+             .then(() => {
+               fixture.detectChanges();
+               return fixture.whenStable();
+             })
+             .then(() => {
+
+               const inputs = fixture.debugElement.queryAll(By.css('input'));
+
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+
+               const upScroll = createMouseWheelEvent(50);
+               inputs[0].triggerEventHandler('mousewheel', upScroll);  // H+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '11:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 11, minute: 30, second: 0});
+
+               const downScroll = createMouseWheelEvent(-50);
+               inputs[0].triggerEventHandler('mousewheel', downScroll);  // H-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:30');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
@@ -257,7 +342,7 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '00:30');
                expect(fixture.componentInstance.model).toEqual({hour: 0, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[2]).click();  // H-
+               (<HTMLButtonElement>buttons[1]).click();  // H-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '23:30');
                expect(fixture.componentInstance.model).toEqual({hour: 23, minute: 30, second: 0});
@@ -282,12 +367,76 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '10:30');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[1]).click();  // M+
+               (<HTMLButtonElement>buttons[2]).click();  // M+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:31');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 31, second: 0});
 
                (<HTMLButtonElement>buttons[3]).click();  // M-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+             });
+       }));
+
+    it('should increment / decrement minutes on key up/down', async(() => {
+         const html = `<ngb-timepicker [(ngModel)]="model"></ngb-timepicker>`;
+
+         const fixture = createTestComponent(html);
+         fixture.componentInstance.model = {hour: 10, minute: 30, second: 0};
+         fixture.detectChanges();
+         fixture.whenStable()
+             .then(() => {
+               fixture.detectChanges();
+               return fixture.whenStable();
+             })
+             .then(() => {
+
+               const inputs = fixture.debugElement.queryAll(By.css('input'));
+
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+
+               const upEvent = createKeyDownEvent(Key.ArrowUp);
+               inputs[1].triggerEventHandler('keydown', upEvent);  // M+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:31');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 31, second: 0});
+
+               const downEvent = createKeyDownEvent(Key.ArrowDown);
+               inputs[1].triggerEventHandler('keydown', downEvent);  // M-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+             });
+       }));
+
+    it('should increment / decrement minutes on mouse wheel up/down', async(() => {
+         const html = `<ngb-timepicker [(ngModel)]="model"></ngb-timepicker>`;
+
+         const fixture = createTestComponent(html);
+         fixture.componentInstance.model = {hour: 10, minute: 30, second: 0};
+         fixture.detectChanges();
+         fixture.whenStable()
+             .then(() => {
+               fixture.detectChanges();
+               return fixture.whenStable();
+             })
+             .then(() => {
+
+               const inputs = fixture.debugElement.queryAll(By.css('input'));
+
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+
+               const upScroll = createMouseWheelEvent(50);
+               inputs[1].triggerEventHandler('mousewheel', upScroll);  // M+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:31');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 31, second: 0});
+
+               const downScroll = createMouseWheelEvent(-50);
+               inputs[1].triggerEventHandler('mousewheel', downScroll);  // M-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:30');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
@@ -311,7 +460,7 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '22:59');
                expect(fixture.componentInstance.model).toEqual({hour: 22, minute: 59, second: 0});
 
-               (<HTMLButtonElement>buttons[1]).click();  // M+
+               (<HTMLButtonElement>buttons[2]).click();  // M+
                fixture.detectChanges();
                expect(fixture.componentInstance.model).toEqual({hour: 23, minute: 0, second: 0});
 
@@ -339,12 +488,75 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '10:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[2]).click();  // S+
+               (<HTMLButtonElement>buttons[4]).click();  // S+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:30:01');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 1});
 
                (<HTMLButtonElement>buttons[5]).click();  // S-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+             });
+       }));
+
+    it('should increment / decrement seconds on key up/down', async(() => {
+         const html = `<ngb-timepicker [(ngModel)]="model" [seconds]="true"></ngb-timepicker>`;
+
+         const fixture = createTestComponent(html);
+         fixture.componentInstance.model = {hour: 10, minute: 30, second: 0};
+         fixture.detectChanges();
+         fixture.whenStable()
+             .then(() => {
+               fixture.detectChanges();
+               return fixture.whenStable();
+             })
+             .then(() => {
+               const inputs = fixture.debugElement.queryAll(By.css('input'));
+
+               expectToDisplayTime(fixture.nativeElement, '10:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+
+               const upEvent = createKeyDownEvent(Key.ArrowUp);
+               inputs[2].triggerEventHandler('keydown', upEvent);  // S+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30:01');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 1});
+
+               const downEvent = createKeyDownEvent(Key.ArrowDown);
+               inputs[2].triggerEventHandler('keydown', downEvent);  // S-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+             });
+       }));
+
+    it('should increment / decrement minutes on mouse wheel up/down', async(() => {
+         const html = `<ngb-timepicker [(ngModel)]="model" [seconds]="true"></ngb-timepicker>`;
+
+         const fixture = createTestComponent(html);
+         fixture.componentInstance.model = {hour: 10, minute: 30, second: 0};
+         fixture.detectChanges();
+         fixture.whenStable()
+             .then(() => {
+               fixture.detectChanges();
+               return fixture.whenStable();
+             })
+             .then(() => {
+
+               const inputs = fixture.debugElement.queryAll(By.css('input'));
+
+               expectToDisplayTime(fixture.nativeElement, '10:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+
+               const upScroll = createMouseWheelEvent(50);
+               inputs[2].triggerEventHandler('mousewheel', upScroll);  // S+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30:01');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 1});
+
+               const downScroll = createMouseWheelEvent(-50);
+               inputs[2].triggerEventHandler('mousewheel', downScroll);  // H-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
@@ -369,7 +581,7 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '10:30:59');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 59});
 
-               (<HTMLButtonElement>buttons[2]).click();  // S+
+               (<HTMLButtonElement>buttons[4]).click();  // S+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:31:00');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 31, second: 0});
@@ -719,22 +931,22 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '13:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[3]).click();  // H-
+               (<HTMLButtonElement>buttons[1]).click();  // H-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '13:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[1]).click();  // M+
+               (<HTMLButtonElement>buttons[2]).click();  // M+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '13:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[4]).click();  // M-
+               (<HTMLButtonElement>buttons[3]).click();  // M-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '13:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[2]).click();  // S+
+               (<HTMLButtonElement>buttons[4]).click();  // S+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '13:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
@@ -752,12 +964,12 @@ describe('ngb-timepicker', () => {
       const fixture = createTestComponent(html);
       fixture.detectChanges();
 
-      let fieldset = getFieldsetElement(fixture.nativeElement);
+      let fieldset = getNgbTpElement(fixture.nativeElement);
       expect(fieldset.hasAttribute('disabled')).toBeTruthy;
 
       fixture.componentInstance.disabled = false;
       fixture.detectChanges();
-      fieldset = getFieldsetElement(fixture.nativeElement);
+      fieldset = getNgbTpElement(fixture.nativeElement);
       expect(fieldset.hasAttribute('disabled')).toBeFalsy;
     });
 
@@ -766,7 +978,7 @@ describe('ngb-timepicker', () => {
 
          const fixture = createTestComponent(html);
          fixture.detectChanges();
-         let fieldset = getFieldsetElement(fixture.nativeElement);
+         let fieldset = getNgbTpElement(fixture.nativeElement);
          expect(fieldset.hasAttribute('disabled')).toBeTruthy();
        }));
   });
@@ -797,22 +1009,22 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '14:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 14, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[3]).click();  // H-
+               (<HTMLButtonElement>buttons[1]).click();  // H-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '13:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[1]).click();  // M+
+               (<HTMLButtonElement>buttons[2]).click();  // M+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '13:31:00');
                expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 31, second: 0});
 
-               (<HTMLButtonElement>buttons[4]).click();  // M-
+               (<HTMLButtonElement>buttons[3]).click();  // M-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '13:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
 
-               (<HTMLButtonElement>buttons[2]).click();  // S+
+               (<HTMLButtonElement>buttons[4]).click();  // S+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '13:30:01');
                expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 1});
