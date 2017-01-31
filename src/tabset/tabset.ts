@@ -82,7 +82,8 @@ export interface NgbTabChangeEvent {
     <ul [class]="'nav nav-' + type + ' justify-content-' + justify" role="tablist">
       <li class="nav-item" *ngFor="let tab of tabs">
         <a [id]="tab.id" class="nav-link" [class.active]="tab.id === activeId" [class.disabled]="tab.disabled"
-          href (click)="!!select(tab.id)" role="tab" [attr.aria-controls]="tab.id + '-panel'" [attr.aria-expanded]="tab.id === activeId">
+          href role="tab" [attr.aria-controls]="tab.id + '-panel'" [attr.aria-expanded]="tab.id === activeId"
+          (click)="!!select(tab.id)" (keydown)="onKeyDown($event, tab.id)">
           {{tab.title}}<template [ngTemplateOutlet]="tab.titleTpl?.templateRef"></template>
         </a>
       </li>
@@ -151,5 +152,57 @@ export class NgbTabset implements AfterContentChecked {
   private _getTabById(id: string): NgbTab {
     let tabsWithId: NgbTab[] = this.tabs.filter(tab => tab.id === id);
     return tabsWithId.length ? tabsWithId[0] : null;
+  }
+
+  private _getNextActiveTabId(tabId: string): string {
+    let tabArray = this.tabs.toArray(); // tabs (type: QueryList) should be iterable according to doc but isnt
+    let found = false;
+
+    // first loop : look for the next active tab
+    for(let tab of tabArray) {
+      if (found && !tab.disabled) return tab.id;
+      if (!found && tab.id === tabId) found = true;
+    }
+
+    // no active tab has been found, look for the first active tab of the array
+    for(let tab of tabArray) {
+      if (!tab.disabled) return tab.id;
+    }
+  }
+
+  private _getPrevActiveTabId(tabId: string): string {
+    let tabArray = this.tabs.toArray().reverse();
+    let found = false;
+    let result: string = '';
+
+    // first loop : look for the next active tab
+    for(let tab of tabArray) {
+      if (found && !tab.disabled) return tab.id;
+      if (!found && tab.id === tabId) found = true;
+    }
+
+    // no active tab has been found, look for the first active tab of the array
+    for(let tab of tabArray) {
+      if (!tab.disabled) return tab.id;
+    }
+  }
+
+  onKeyDown(event: any, tabId: string) {
+    switch(event.keyCode) {
+      case 37 /* left arrow */:
+        let nextTabId = this._getNextActiveTabId(tabId);
+        this.select(nextTabId);
+        document.getElementById(nextTabId).focus();
+        event.preventDefault();
+        break;
+      case 39 /* right arrow */:
+        let prevTabId = this._getPrevActiveTabId(tabId);
+        this.select(prevTabId);
+        document.getElementById(prevTabId).focus();
+        event.preventDefault();
+        break;
+      default:
+        return;
+    }
   }
 }
