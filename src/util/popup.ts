@@ -1,17 +1,26 @@
 import {
-  Injector,
-  TemplateRef,
-  ViewRef,
-  ViewContainerRef,
-  Renderer,
+  ChangeDetectionStrategy,
+  Component,
   ComponentRef,
   ComponentFactory,
-  ComponentFactoryResolver
+  ComponentFactoryResolver,
+  Directive,
+  ElementRef,
+  EventEmitter,
+  Injector,
+  Input,
+  Output,
+  OnInit,
+  OnDestroy,
+  Renderer,
+  TemplateRef,
+  ViewContainerRef,
+  ViewRef,
+  NgZone
 } from '@angular/core';
 
-export class ContentRef {
-  constructor(public nodes: any[], public viewRef?: ViewRef, public componentRef?: ComponentRef<any>) {}
-}
+import {listenToTriggers} from '../util/triggers';
+import {positionElements} from '../util/positioning';
 
 export class PopupService<T> {
   private _windowFactory: ComponentFactory<T>;
@@ -44,6 +53,193 @@ export class PopupService<T> {
         this._contentRef = null;
       }
     }
+  }
+
+  private _getContentRef(content: string | TemplateRef<any>, context?: any): ContentRef {
+    if (!content) {
+      return new ContentRef([]);
+    } else if (content instanceof TemplateRef) {
+      const viewRef = this._viewContainerRef.createEmbeddedView(<TemplateRef<T>>content, context);
+      return new ContentRef([viewRef.rootNodes], viewRef);
+    } else {
+      return new ContentRef([[this._renderer.createText(null, `${content}`)]]);
+    }
+  }
+}
+
+export class ContentRef {
+  constructor(public nodes: any[], public viewRef?: ViewRef, public componentRef?: ComponentRef<any>) {}
+}
+
+
+@Component({
+  selector: 'ngb-popup-container',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {'[class]': 'type + " show " + type + "-" + placement', 'role': 'tooltip'},
+})
+export abstract class NgbPopup {
+  @Input() placement: 'top' | 'bottom' | 'left' | 'right' = 'top';
+  constructor(protected type: 'tooltip' | 'popover') {}
+}
+
+@Directive({
+  selector: '[ngbPopup]',
+  exportAs: 'ngbPopup',
+})
+export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnInit, OnDestroy {
+  /**
+   * Placement of a popover. Accepts: "top", "bottom", "left", "right"
+   */
+  @Input() placement: 'top' | 'bottom' | 'left' | 'right';
+
+  /**
+   * Specifies events that should trigger. Supports a space separated list of event names.
+   */
+  @Input() triggers: string;
+
+  /**
+   * A selector specifying the element the popover should be appended to.
+   * Currently only supports "body".
+   */
+  @Input() container: string;
+
+  /**
+   * Emits an event when the popover is shown
+   */
+  @Output() shown = new EventEmitter();
+
+  /**
+   * Emits an event when the popover is hidden
+   */
+  @Output() hidden = new EventEmitter();
+
+  /**
+   * Content to be displayed as tooltip.
+   */
+  protected _content: string | TemplateRef<any>;
+
+  protected _contentRef: ContentRef;
+
+  /**
+   * Reference to the popup window.
+   */
+  private _popupRef: ComponentRef<T>;
+  private _popupComponentFactory: ComponentFactory<T>;
+  private _unregisterListenersFn;
+  private _zoneSubscription: any;
+
+  constructor(
+    private _type: any,
+    private _renderer: Renderer,
+    private _injector: Injector,
+    private _elementRef: ElementRef,
+    private _viewContainerRef: ViewContainerRef,
+    private _resolver: ComponentFactoryResolver,
+    private ngZone: NgZone) {
+    // get the factory needed to create the component
+    this._popupComponentFactory = _resolver.resolveComponentFactory<T>(this._type);
+    //let popupComponentFactory = this._resolver.resolveComponentFactory(type);
+
+    this._zoneSubscription = ngZone.onStable.subscribe(() => {
+      if (this._popupRef) {
+        positionElements(
+          this._elementRef.nativeElement,
+          this._popupRef.location.nativeElement,
+          this.placement,
+          this.container === 'body');
+      }
+    });
+  }
+
+  /**
+   * Content to be displayed as tooltip. If falsy, the tooltip won't open.
+   */
+  @Input()
+  set content(value: string | TemplateRef<any>) {
+    this._content = value;
+    if (!value && this._popupRef) {
+      this.close();
+    }
+  }
+
+  get content() { return this._content; }
+
+  /**
+   * Opens an element’s popup. This is considered a “manual” triggering of the popup.
+   * The context is an optional value to be injected into the popup template when it is created.
+   */
+  open(context?: any) {
+    if (!this._popupRef && !!this._content) {
+      //this._popupRef = this._popupService.open(this.content, context);
+
+      this._contentRef = this._getContentRef(this._content, context);
+      this._popupRef = this._viewContainerRef.createComponent(
+        this._popupComponentFactory,
+        0,
+        this._injector,
+        this._contentRef.nodes);
+
+      // actually create the component
+      // this._popupRef = this._viewContainerRef.createComponent(popupComponentFactory);
+
+
+      this._popupRef.instance.placement = this.placement;
+
+      if (this.container === 'body') {
+        window.document.querySelector(this.container).appendChild(this._popupRef.location.nativeElement);
+      }
+
+      // we need to manually invoke change detection since events registered via
+      // Renderer::listen() - to be determined if this is a bug in the Angular itself
+      this._popupRef.changeDetectorRef.markForCheck();
+      this.shown.emit();
+    }
+  }
+
+  /**
+   * Closes an element’s tooltip. This is considered a “manual” triggering of the tooltip.
+   */
+  close(): void {
+    if (!!this._popupRef) {
+
+      this._viewContainerRef.remove(this._viewContainerRef.indexOf(this._popupRef.hostView));
+      this._popupRef = null;
+
+      if (this._contentRef.viewRef) {
+        this._viewContainerRef.remove(this._viewContainerRef.indexOf(this._contentRef.viewRef));
+        this._contentRef = null;
+      }
+
+      this.hidden.emit();
+    }
+  }
+
+  /**
+   * Toggles an element’s tooltip. This is considered a “manual” triggering of the tooltip.
+   */
+  toggle(): void {
+    if (this._popupRef) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+
+  /**
+   * Returns whether or not the tooltip is currently being shown
+   */
+  isOpen(): boolean { return this._popupRef != null; }
+
+  ngOnInit() {
+    this._unregisterListenersFn = listenToTriggers(
+      this._renderer, this._elementRef.nativeElement, this.triggers, this.open.bind(this), this.close.bind(this),
+      this.toggle.bind(this));
+  }
+
+  ngOnDestroy() {
+    this.close();
+    this._unregisterListenersFn();
+    this._zoneSubscription.unsubscribe();
   }
 
   private _getContentRef(content: string | TemplateRef<any>, context?: any): ContentRef {
