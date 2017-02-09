@@ -18,7 +18,11 @@ import {
 } from '@angular/core';
 
 import { NgbPopup, PopupService, NgbPopupAnchor } from '../util/popup';
+import {listenToTriggers} from '../util/triggers';
 import {NgbTooltipConfig} from './tooltip-config';
+import {positionElements} from '../util/positioning';
+
+
 
 @Component({
   selector: 'ngb-tooltip-window',
@@ -26,7 +30,7 @@ import {NgbTooltipConfig} from './tooltip-config';
   host: {'[class]': 'type + " show " + type + "-" + placement', 'role': 'tooltip'},
   template: `<div class="tooltip-inner"><ng-content></ng-content></div>`
 })
-export class NgbTooltipWindow extends NgbPopup  {
+export class NgbTooltipWindow extends NgbPopup {
   constructor() {
     super('tooltip');
   }
@@ -38,17 +42,19 @@ export class NgbTooltipWindow extends NgbPopup  {
 @Directive({
   selector: '[ngbTooltip]',
   exportAs: 'ngbTooltip'})
-export class NgbTooltip extends NgbPopupAnchor<NgbTooltipWindow> {
+export class NgbTooltip extends NgbPopupAnchor<NgbTooltipWindow> implements OnInit, OnDestroy {
   @Input('ngbTooltip') content: string | TemplateRef<any>;
 
+  private _unregisterListenersFn;
+
   constructor(
-    config: NgbTooltipConfig,
-    renderer: Renderer,
-    injector: Injector,
-    elementRef: ElementRef,
-    viewContainerRef: ViewContainerRef,
-    resolver: ComponentFactoryResolver,
-    ngZone: NgZone) {
+    protected config: NgbTooltipConfig,
+    protected renderer: Renderer,
+    protected injector: Injector,
+    protected elementRef: ElementRef,
+    protected viewContainerRef: ViewContainerRef,
+    protected resolver: ComponentFactoryResolver,
+    protected ngZone: NgZone) {
     super(
       NgbTooltipWindow,
       renderer,
@@ -62,4 +68,16 @@ export class NgbTooltip extends NgbPopupAnchor<NgbTooltipWindow> {
     this.triggers = config.triggers;
     this.container = config.container;
   }
+
+  ngOnInit() {
+    this._unregisterListenersFn = listenToTriggers(
+      this._renderer, this._elementRef.nativeElement, this.triggers, this.open.bind(this), this.close.bind(this),
+      this.toggle.bind(this));
+  }
+
+  ngOnDestroy() {
+    this._unregisterListenersFn();
+    super.ngOnDestroy();
+  }
+
 }

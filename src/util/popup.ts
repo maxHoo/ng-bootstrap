@@ -19,9 +19,7 @@ import {
   NgZone
 } from '@angular/core';
 
-import {listenToTriggers} from '../util/triggers';
 import {positionElements} from '../util/positioning';
-
 export class PopupService<T> {
   private _windowFactory: ComponentFactory<T>;
   private _windowRef: ComponentRef<T>;
@@ -86,7 +84,7 @@ export abstract class NgbPopup {
   selector: '[ngbPopup]',
   exportAs: 'ngbPopup',
 })
-export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnInit, OnDestroy {
+export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnDestroy {
   /**
    * Placement of a popover. Accepts: "top", "bottom", "left", "right"
    */
@@ -125,17 +123,16 @@ export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnInit, OnDe
    */
   private _popupRef: ComponentRef<T>;
   private _popupComponentFactory: ComponentFactory<T>;
-  private _unregisterListenersFn;
   private _zoneSubscription: any;
 
   constructor(
-    private _type: any,
-    private _renderer: Renderer,
-    private _injector: Injector,
-    private _elementRef: ElementRef,
-    private _viewContainerRef: ViewContainerRef,
-    private _resolver: ComponentFactoryResolver,
-    private ngZone: NgZone) {
+    protected _type: any,
+    protected _renderer: Renderer,
+    protected _injector: Injector,
+    protected _elementRef: ElementRef,
+    protected _viewContainerRef: ViewContainerRef,
+    protected _resolver: ComponentFactoryResolver,
+    protected ngZone: NgZone) {
     // get the factory needed to create the component
     this._popupComponentFactory = _resolver.resolveComponentFactory<T>(this._type);
     //let popupComponentFactory = this._resolver.resolveComponentFactory(type);
@@ -230,15 +227,8 @@ export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnInit, OnDe
    */
   isOpen(): boolean { return this._popupRef != null; }
 
-  ngOnInit() {
-    this._unregisterListenersFn = listenToTriggers(
-      this._renderer, this._elementRef.nativeElement, this.triggers, this.open.bind(this), this.close.bind(this),
-      this.toggle.bind(this));
-  }
-
   ngOnDestroy() {
     this.close();
-    this._unregisterListenersFn();
     this._zoneSubscription.unsubscribe();
   }
 
