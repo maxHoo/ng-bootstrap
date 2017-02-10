@@ -121,7 +121,7 @@ export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnDestroy {
   /**
    * Reference to the popup window.
    */
-  private _popupRef: ComponentRef<T>;
+  protected _popupRef: ComponentRef<T>;
   private _popupComponentFactory: ComponentFactory<T>;
   private _zoneSubscription: any;
 

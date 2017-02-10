@@ -17,7 +17,7 @@ import {
   NgZone
 } from '@angular/core';
 
-import { NgbPopup, PopupService, NgbPopupAnchor } from '../util/popup';
+import { NgbPopup, NgbPopupAnchor } from '../util/popup';
 import {listenToTriggers} from '../util/triggers';
 import {NgbTooltipConfig} from './tooltip-config';
 import {positionElements} from '../util/positioning';
@@ -42,7 +42,7 @@ export class NgbTooltipWindow extends NgbPopup {
 @Directive({
   selector: '[ngbTooltip]',
   exportAs: 'ngbTooltip'})
-export class NgbTooltip extends NgbPopupAnchor<NgbTooltipWindow> implements OnInit, OnDestroy {
+export class NgbTooltip extends NgbPopupAnchor<NgbTooltipWindow> {
   @Input('ngbTooltip') content: string | TemplateRef<any>;
 
   private _unregisterListenersFn;
