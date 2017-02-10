@@ -76,8 +76,11 @@ export class ContentRef {
   host: {'[class]': 'type + " show " + type + "-" + placement', 'role': 'tooltip'},
 })
 export abstract class NgbPopup {
+  protected type: string = 'popup';
   @Input() placement: 'top' | 'bottom' | 'left' | 'right' = 'top';
-  constructor(protected type: 'tooltip' | 'popover') {}
+  constructor(type: string = 'popup') {
+    this.type = type;
+  }
 }
 
 @Directive({
@@ -88,12 +91,12 @@ export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnDestroy {
   /**
    * Placement of a popover. Accepts: "top", "bottom", "left", "right"
    */
-  @Input() placement: 'top' | 'bottom' | 'left' | 'right';
+  @Input() placement: 'top' | 'bottom' | 'left' | 'right' = 'top';
 
   /**
    * Specifies events that should trigger. Supports a space separated list of event names.
    */
-  @Input() triggers: string;
+  @Input() triggers: string = 'hover';
 
   /**
    * A selector specifying the element the popover should be appended to.
@@ -151,7 +154,7 @@ export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnDestroy {
   /**
    * Content to be displayed as tooltip. If falsy, the tooltip won't open.
    */
-  @Input()
+  @Input('ngbPopup')
   set content(value: string | TemplateRef<any>) {
     this._content = value;
     if (!value && this._popupRef) {
