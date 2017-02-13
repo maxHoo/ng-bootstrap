@@ -40,7 +40,12 @@ export class NgbPopoverWindow extends NgbPopup {
 /**
  * A lightweight, extensible directive for fancy popover creation.
  */
-@Directive({selector: '[ngbPopover]', exportAs: 'ngbPopover'})
+@Directive({
+  selector: '[ngbPopover]',
+  exportAs: 'ngbPopover',
+  inputs: ['placement', 'triggers', 'containter'],
+  outputs: ['shown', 'hidden']
+})
 export class NgbPopover extends NgbPopupAnchor<NgbPopoverWindow> {
   /**
    * Content to be displayed as popover.
@@ -50,8 +55,6 @@ export class NgbPopover extends NgbPopupAnchor<NgbPopoverWindow> {
    * Title of a popover.
    */
   @Input() popoverTitle: string;
-
-  private _unregisterListenersFn;
 
   constructor(
     protected config: NgbPopoverConfig,
@@ -82,16 +85,5 @@ export class NgbPopover extends NgbPopupAnchor<NgbPopoverWindow> {
   open(context?: any) {
     super.open(context);
     this._popupRef.instance.title = this.popoverTitle;
-  }
-
-  ngOnInit() {
-    this._unregisterListenersFn = listenToTriggers(
-        this._renderer, this._elementRef.nativeElement, this.triggers, this.open.bind(this), this.close.bind(this),
-        this.toggle.bind(this));
-  }
-
-  ngOnDestroy() {
-    this._unregisterListenersFn();
-    super.ngOnDestroy();
   }
 }

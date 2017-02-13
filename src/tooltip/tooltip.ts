@@ -18,9 +18,7 @@ import {
 } from '@angular/core';
 
 import { NgbPopup, NgbPopupAnchor } from '../util/popup';
-import {listenToTriggers} from '../util/triggers';
 import {NgbTooltipConfig} from './tooltip-config';
-import {positionElements} from '../util/positioning';
 
 
 
@@ -41,11 +39,12 @@ export class NgbTooltipWindow extends NgbPopup {
  */
 @Directive({
   selector: '[ngbTooltip]',
-  exportAs: 'ngbTooltip'})
+  exportAs: 'ngbTooltip',
+  inputs: ['placement', 'triggers', 'containter'],
+  outputs: ['shown', 'hidden']
+})
 export class NgbTooltip extends NgbPopupAnchor<NgbTooltipWindow> {
-  @Input('ngbTooltip') content: string | TemplateRef<any>;
-
-  private _unregisterListenersFn;
+  @Input('ngbTooltip') content;
 
   constructor(
     protected config: NgbTooltipConfig,
@@ -68,16 +67,4 @@ export class NgbTooltip extends NgbPopupAnchor<NgbTooltipWindow> {
     this.triggers = config.triggers;
     this.container = config.container;
   }
-
-  ngOnInit() {
-    this._unregisterListenersFn = listenToTriggers(
-      this._renderer, this._elementRef.nativeElement, this.triggers, this.open.bind(this), this.close.bind(this),
-      this.toggle.bind(this));
-  }
-
-  ngOnDestroy() {
-    this._unregisterListenersFn();
-    super.ngOnDestroy();
-  }
-
 }

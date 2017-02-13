@@ -6,7 +6,7 @@ import {Injectable} from '@angular/core';
  * order to provide default values for all the tooltips used in the application.
  */
 @Injectable()
-export abstract class NgbPopupConfig {
+export class NgbPopupConfig {
   placement: 'top' | 'bottom' | 'left' | 'right' = 'top';
   triggers = 'hover';
   container: string;

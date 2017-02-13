@@ -20,6 +20,8 @@ import {
 } from '@angular/core';
 
 import {positionElements} from '../util/positioning';
+import {listenToTriggers} from '../util/triggers';
+
 export class PopupService<T> {
   private _windowFactory: ComponentFactory<T>;
   private _windowRef: ComponentRef<T>;
@@ -87,32 +89,32 @@ export abstract class NgbPopup {
   selector: '[ngbPopup]',
   exportAs: 'ngbPopup',
 })
-export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnDestroy {
+export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnInit, OnDestroy {
   /**
    * Placement of a popover. Accepts: "top", "bottom", "left", "right"
    */
-  @Input() placement: 'top' | 'bottom' | 'left' | 'right' = 'top';
+  placement: 'top' | 'bottom' | 'left' | 'right' = 'top';
 
   /**
    * Specifies events that should trigger. Supports a space separated list of event names.
    */
-  @Input() triggers: string = 'hover';
+  triggers: string = 'hover';
 
   /**
    * A selector specifying the element the popover should be appended to.
    * Currently only supports "body".
    */
-  @Input() container: string;
+  container: string;
 
   /**
    * Emits an event when the popover is shown
    */
-  @Output() shown = new EventEmitter();
+  shown = new EventEmitter();
 
   /**
    * Emits an event when the popover is hidden
    */
-  @Output() hidden = new EventEmitter();
+  hidden = new EventEmitter();
 
   /**
    * Content to be displayed as tooltip.
@@ -127,6 +129,11 @@ export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnDestroy {
   protected _popupRef: ComponentRef<T>;
   private _popupComponentFactory: ComponentFactory<T>;
   private _zoneSubscription: any;
+
+  /**
+   * Hold the methods to dynamically unregister the listeners
+  */
+  protected _unregisterListenersFn;
 
   constructor(
     protected _type: any,
@@ -230,7 +237,14 @@ export abstract class NgbPopupAnchor<T extends NgbPopup> implements OnDestroy {
    */
   isOpen(): boolean { return this._popupRef != null; }
 
+  ngOnInit() {
+    this._unregisterListenersFn = listenToTriggers(
+      this._renderer, this._elementRef.nativeElement, this.triggers, this.open.bind(this), this.close.bind(this),
+      this.toggle.bind(this));
+  }
+
   ngOnDestroy() {
+    this._unregisterListenersFn();
     this.close();
     this._zoneSubscription.unsubscribe();
   }
