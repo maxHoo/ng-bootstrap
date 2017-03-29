@@ -12,13 +12,9 @@ import {NgbTimepicker} from './timepicker';
 const createTestComponent = (html: string) =>
     createGenericTestComponent(html, TestComponent) as ComponentFixture<TestComponent>;
 
-enum Key {
-  ArrowUp = 38,
-  ArrowDown = 40
-}
 
-function createKeyDownEvent(key: number) {
-  const event = {which: key, preventDefault: () => {}};
+function createKeyDownEvent(key: 'ArrowUp' | 'ArrowDown') {
+  const event = {key: key, preventDefault: () => {}};
   spyOn(event, 'preventDefault');
   return event;
 }
@@ -271,15 +267,80 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '10:30');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
 
-               const upEvent = createKeyDownEvent(Key.ArrowUp);
-               inputs[0].triggerEventHandler('keydown', upEvent);  // H+
+               const upEvent = createKeyDownEvent('ArrowUp');
+               inputs[0].triggerEventHandler('keydown.ArrowUp', upEvent);  // H+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '11:30');
                expect(fixture.componentInstance.model).toEqual({hour: 11, minute: 30, second: 0});
 
+               const downEvent = createKeyDownEvent('ArrowDown');
+               inputs[0].triggerEventHandler('keydown.ArrowDown', downEvent);  // H-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+             });
+       }));
 
-               const downEvent = createKeyDownEvent(Key.ArrowDown);
-               inputs[0].triggerEventHandler('keydown', downEvent);  // H-
+
+    it('should increment / decrement hours on mouse wheel up/down', async(() => {
+         const html = `<ngb-timepicker [(ngModel)]="model"></ngb-timepicker>`;
+
+         const fixture = createTestComponent(html);
+         fixture.componentInstance.model = {hour: 10, minute: 30, second: 0};
+         fixture.detectChanges();
+         fixture.whenStable()
+             .then(() => {
+               fixture.detectChanges();
+               return fixture.whenStable();
+             })
+             .then(() => {
+
+               const inputs = fixture.debugElement.queryAll(By.css('input'));
+
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+
+               const upScroll = createMouseWheelEvent(50);
+               inputs[0].triggerEventHandler('mousewheel', upScroll);  // H+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '11:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 11, minute: 30, second: 0});
+
+               const downScroll = createMouseWheelEvent(-50);
+               inputs[0].triggerEventHandler('mousewheel', downScroll);  // H-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+             });
+       }));
+
+
+    it('should increment / decrement hours on key up/down', async(() => {
+         const html = `<ngb-timepicker [(ngModel)]="model"></ngb-timepicker>`;
+
+         const fixture = createTestComponent(html);
+         fixture.componentInstance.model = {hour: 10, minute: 30, second: 0};
+         fixture.detectChanges();
+         fixture.whenStable()
+             .then(() => {
+               fixture.detectChanges();
+               return fixture.whenStable();
+             })
+             .then(() => {
+
+               const inputs = fixture.debugElement.queryAll(By.css('input'));
+
+               expectToDisplayTime(fixture.nativeElement, '10:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
+
+               const upEvent = createKeyDownEvent('ArrowUp');
+               inputs[0].triggerEventHandler('keydown.ArrowUp', upEvent);  // H+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '11:30');
+               expect(fixture.componentInstance.model).toEqual({hour: 11, minute: 30, second: 0});
+
+               const downEvent = createKeyDownEvent('ArrowDown');
+               inputs[0].triggerEventHandler('keydown.ArrowDown', downEvent);  // H-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:30');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
@@ -397,14 +458,14 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '10:30');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
 
-               const upEvent = createKeyDownEvent(Key.ArrowUp);
-               inputs[1].triggerEventHandler('keydown', upEvent);  // M+
+               const upEvent = createKeyDownEvent('ArrowUp');
+               inputs[1].triggerEventHandler('keydown.ArrowUp', upEvent);  // M+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:31');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 31, second: 0});
 
-               const downEvent = createKeyDownEvent(Key.ArrowDown);
-               inputs[1].triggerEventHandler('keydown', downEvent);  // M-
+               const downEvent = createKeyDownEvent('ArrowDown');
+               inputs[1].triggerEventHandler('keydown.ArrowDown', downEvent);  // M-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:30');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
@@ -517,14 +578,14 @@ describe('ngb-timepicker', () => {
                expectToDisplayTime(fixture.nativeElement, '10:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
 
-               const upEvent = createKeyDownEvent(Key.ArrowUp);
-               inputs[2].triggerEventHandler('keydown', upEvent);  // S+
+               const upEvent = createKeyDownEvent('ArrowUp');
+               inputs[2].triggerEventHandler('keydown.ArrowUp', upEvent);  // S+
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:30:01');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 1});
 
-               const downEvent = createKeyDownEvent(Key.ArrowDown);
-               inputs[2].triggerEventHandler('keydown', downEvent);  // S-
+               const downEvent = createKeyDownEvent('ArrowDown');
+               inputs[2].triggerEventHandler('keydown.ArrowDown', downEvent);  // S-
                fixture.detectChanges();
                expectToDisplayTime(fixture.nativeElement, '10:30:00');
                expect(fixture.componentInstance.model).toEqual({hour: 10, minute: 30, second: 0});
@@ -958,6 +1019,61 @@ describe('ngb-timepicker', () => {
              });
        }));
 
+    it('should not change the value on mousewheel up/down, when it is disabled', async(() => {
+         const html = `<ngb-timepicker [(ngModel)]="model" [seconds]="true" [disabled]="disabled"></ngb-timepicker>`;
+
+         const fixture = createTestComponent(html);
+         fixture.componentInstance.model = {hour: 13, minute: 30, second: 0};
+         fixture.detectChanges();
+         fixture.whenStable()
+             .then(() => {
+               fixture.detectChanges();
+               return fixture.whenStable();
+             })
+             .then(() => {
+               const inputs = fixture.debugElement.queryAll(By.css('input'));
+
+               expectToDisplayTime(fixture.nativeElement, '13:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
+
+               const upScroll = createMouseWheelEvent(50);
+               const downScroll = createMouseWheelEvent(-50);
+
+               expectToDisplayTime(fixture.nativeElement, '13:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
+
+               inputs[0].triggerEventHandler('mousewheel', upScroll);  // H+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '13:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
+
+               inputs[0].triggerEventHandler('mousewheel', downScroll);  // H-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '13:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
+
+               inputs[1].triggerEventHandler('mousewheel', upScroll);  // M+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '13:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
+
+               inputs[1].triggerEventHandler('mousewheel', downScroll);  // M-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '13:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
+
+               inputs[2].triggerEventHandler('mousewheel', upScroll);  // S+
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '13:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
+
+               inputs[2].triggerEventHandler('mousewheel', downScroll);  // S-
+               fixture.detectChanges();
+               expectToDisplayTime(fixture.nativeElement, '13:30:00');
+               expect(fixture.componentInstance.model).toEqual({hour: 13, minute: 30, second: 0});
+             });
+       }));
+
     it('should have disabled class, when it is disabled', () => {
       const html = `<ngb-timepicker [(ngModel)]="model" [seconds]="true" [disabled]="disabled"></ngb-timepicker>`;
 
@@ -1064,6 +1180,65 @@ describe('ngb-timepicker', () => {
       const fixture = createTestComponent(html);
       const buttons = getButtons(fixture.nativeElement);
       expect(buttons.length).toBe(0);
+    });
+  });
+
+  describe('size', () => {
+
+    it('should add appropriate CSS classes to butons and inputs when size is small', () => {
+      const html = `<ngb-timepicker size="small"></ngb-timepicker>`;
+
+      const fixture = createTestComponent(html);
+      const buttons = getButtons(fixture.nativeElement);
+      const inputs = getInputs(fixture.nativeElement);
+      for (let i = 0; i < buttons.length; i++) {
+        expect(buttons[i]).toHaveCssClass('btn-sm');
+      }
+      for (let i = 0; i < inputs.length; i++) {
+        expect(inputs[i]).toHaveCssClass('form-control-sm');
+      }
+    });
+
+    it('should add appropriate CSS classes to butons and inputs when size is large', () => {
+      const html = `<ngb-timepicker size="large"></ngb-timepicker>`;
+
+      const fixture = createTestComponent(html);
+      const buttons = getButtons(fixture.nativeElement);
+      const inputs = getInputs(fixture.nativeElement);
+      for (let i = 0; i < buttons.length; i++) {
+        expect(buttons[i]).toHaveCssClass('btn-lg');
+      }
+      for (let i = 0; i < inputs.length; i++) {
+        expect(inputs[i]).toHaveCssClass('form-control-lg');
+      }
+    });
+
+    it('should not add special CSS classes to butons and inputs when size is medium', () => {
+      const html = `<ngb-timepicker size="medium"></ngb-timepicker>`;
+
+      const fixture = createTestComponent(html);
+      const buttons = getButtons(fixture.nativeElement);
+      const inputs = getInputs(fixture.nativeElement);
+      for (let i = 0; i < buttons.length; i++) {
+        expect(buttons[i]).not.toHaveCssClass('btn-lg');
+      }
+      for (let i = 0; i < inputs.length; i++) {
+        expect(inputs[i]).not.toHaveCssClass('form-control-lg');
+      }
+    });
+
+    it('should not add special CSS classes to butons and inputs when no size is specified', () => {
+      const html = `<ngb-timepicker></ngb-timepicker>`;
+
+      const fixture = createTestComponent(html);
+      const buttons = getButtons(fixture.nativeElement);
+      const inputs = getInputs(fixture.nativeElement);
+      for (let i = 0; i < buttons.length; i++) {
+        expect(buttons[i]).not.toHaveCssClass('btn-lg');
+      }
+      for (let i = 0; i < inputs.length; i++) {
+        expect(inputs[i]).not.toHaveCssClass('form-control-lg');
+      }
     });
   });
 
