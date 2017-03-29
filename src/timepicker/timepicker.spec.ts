@@ -38,8 +38,8 @@ function getButtons(nativeEl: HTMLElement) {
   return nativeEl.querySelectorAll('button.btn-link');
 }
 
-function getNgbTpElement(element: HTMLElement): HTMLFieldSetElement {
-  return <HTMLFieldSetElement>element.querySelector('.ngb-tp');
+function getFieldsetElement(element: HTMLElement): HTMLFieldSetElement {
+  return <HTMLFieldSetElement>element.querySelector('fieldset');
 }
 
 function getMeridianButton(nativeEl: HTMLElement) {
@@ -1080,21 +1080,22 @@ describe('ngb-timepicker', () => {
       const fixture = createTestComponent(html);
       fixture.detectChanges();
 
-      let fieldset = getNgbTpElement(fixture.nativeElement);
+      let fieldset = getFieldsetElement(fixture.nativeElement);
       expect(fieldset.hasAttribute('disabled')).toBeTruthy;
 
       fixture.componentInstance.disabled = false;
       fixture.detectChanges();
-      fieldset = getNgbTpElement(fixture.nativeElement);
+      fieldset = getFieldsetElement(fixture.nativeElement);
       expect(fieldset.hasAttribute('disabled')).toBeFalsy;
     });
 
-    it('should have disabled attribute when it is disabled using reactive forms', async(() => {
+    fit('should have disabled attribute when it is disabled using reactive forms', async(() => {
          const html = `<form [formGroup]="disabledForm"><ngb-timepicker formControlName="control"></ngb-timepicker></form>`;
 
          const fixture = createTestComponent(html);
          fixture.detectChanges();
-         let fieldset = getNgbTpElement(fixture.nativeElement);
+         debugger;
+         let fieldset = getFieldsetElement(fixture.nativeElement);
          expect(fieldset.hasAttribute('disabled')).toBeTruthy();
        }));
   });
